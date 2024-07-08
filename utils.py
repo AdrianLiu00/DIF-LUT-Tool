@@ -29,13 +29,17 @@ def dec_to_bin_noround(num, bits=12, poi=0):
 
 
 def dec_to_bin(num, bits=12, poi=0) -> str:
-    ''' Decimal float numer to Binary string (possibly lossy). '''
+    ''' Decimal float number to Signed Binary string (possibly lossy). '''
 
     # Determine representable boundaries
-    if num >= (2**poi) or num < -(2**poi):
-        return "Illegal Input."
+    if num > (2**poi) or num < -(2**poi):
+        raise ValueError("Illegal Input For Dec-to-Bin! (dec:{} bits:{} poi:{})".format(num, bits, poi))
     
-    pos = (num >= 0)
+    # Loose Positive Boundary with saturation
+    if num == 2**poi:
+        return '0' + (bits-1) * '1' # Saturation
+
+
     msb = 2 ** poi  # unify sign-bit
     num_com = num if num >= 0 else 2**(poi+1) + num
 
@@ -159,10 +163,12 @@ if __name__ == '__main__':
     pai = 3.1415926
     bstr = dec_to_bin(pai/6, bits=12, poi=1)
     apai = bin_to_dec(bstr, poi=1)
-    # print(pai/6, bstr, apai)
+    print(pai/6, bstr, apai)
 
-    for i in range(10):
-        random_test(10)
+    # dec_to_bin(1.2, 10, 0)
+
+    # for i in range(10):
+    #     random_test(10)
 
     # print(inv('00100'))
     # print(inv('11100'))
