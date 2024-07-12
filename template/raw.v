@@ -1,9 +1,9 @@
 module $$FUNC$$_diflut (
-    data_in,
-    data_out,
+    input signed data_in,
+    output signed data_out,
     
-    clk,
-    rsn
+    input clk,
+    input rsn
 );
 
 //-------------------------------------------------------
@@ -18,11 +18,8 @@ localparam WORD_BIT = $$WORD_BIT$$;
 //-------------------------------------------------------
 // Declaration
 
-input signed [INPUT_BIT-1:0] data_in;
-output signed reg [OUTPUT_BIT-1:0] data_out;
-
-input clk;
-input rsn;
+wire [INPUT_BIT-1:0] data_in;
+reg  [OUTPUT_BIT-1:0] data_out;
 
 wire [WORD_BIT-1:0] pwl_val;
 
@@ -48,9 +45,7 @@ end
 //-------------------------------------------------------
 // Piecewise linear matching
 
-always @(*) begin
-$$PWL_HDL$$
-end
+assign pwl_val = $$PWL_HDL$$
 
 //-------------------------------------------------------
 // Range addressable look-up table
@@ -74,6 +69,7 @@ assign lut_val = {in_reg[KEY_BIT-1]? lut_val_neg:lut_val_pos};
 // Add and Output
 
 // adder ip
+// $$WORD_BIT$$bits + $$WORD_BIT$$bits = $$WORD_BIT$$bits
 add_data add_u0(
     .A      (pwl_val),
     .B      (lut_val),

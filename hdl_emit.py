@@ -7,7 +7,7 @@ from utils import dec_to_bin
 from lut_emit import range_lut_emit
 
 
-def pwl_hdl_generate(self:NLOperation) -> str:
+def pwl_hdl_generate_reg(self:NLOperation) -> str:
     kbit = self.KEY_BIT
     ipoi = self.IPOI
     wbit = self.WORD_BIT
@@ -98,6 +98,96 @@ def pwl_hdl_generate(self:NLOperation) -> str:
 
     return pwl_hdl        
 
+
+def pwl_hdl_generate(self:NLOperation) -> str:
+    kbit = self.KEY_BIT
+    ipoi = self.IPOI
+    wbit = self.WORD_BIT
+    opoi = self.OPOI
+
+    seg_num = self.tfunc.tpwl.seg_number
+    linear_list = self.tfunc.tpwl.linears
+
+    pwl_hdl = ''
+
+    # Create if-else sequence
+    for index in range(seg_num):
+        # indent
+        if index != 0:
+            pwl_hdl = pwl_hdl + '                 '
+        
+        linear = linear_list[index]
+        left_bound = linear.boundry_l > -(2**ipoi)
+        right_bound = linear.boundry_r < 2**ipoi
+
+        comp_l = ''
+        and_flag = ''
+        comp_r = ''
+        if left_bound:
+            bstr = dec_to_bin(linear.boundry_l, bits=kbit, poi=ipoi)
+            comp_l = 'in_reg >= {}\'b{}'.format(kbit, bstr)
+        
+        if left_bound and right_bound:
+            and_flag = ' && '
+        
+        if right_bound:
+            bstr = dec_to_bin(linear.boundry_r, bits=kbit, poi=ipoi)
+            comp_r = 'in_reg < {}\'b{}'.format(kbit, bstr)
+        
+        pwl_hdl = pwl_hdl + ' ({}{}{}) ? '.format(comp_l, and_flag, comp_r)
+
+
+        # assignment expression
+        flat = (linear.slope == 0)
+        incl = (linear.slope != 0) and (linear.bias == 0) # bias=0 -> saving adder resources
+        
+        if not flat and not incl:
+            raise ValueError('Illegal Linear Function!')
+        
+        if flat:
+            bstr = dec_to_bin(linear.bias, bits=wbit, poi=opoi)
+            assign_str = '{}\'b{}'.format(wbit, bstr)
+        
+        if incl:
+            greater_zero = (linear.slope >=0)
+            if greater_zero:
+                signal_process = 'in_reg'
+            else:
+                signal_process = '(~in_reg + 1\'b1)'
+
+            shift_num = int(np.log2(abs(linear.slope)))
+            spoi = ipoi + shift_num
+
+            # Pending for modification
+            index_shead = (kbit-2) - (spoi-opoi)
+            if index_shead < 0 :
+                raise ValueError('Out-of-Range Piecewise Matching!')
+            
+            padding_head = ''
+            if index_shead > kbit-2:
+                padding_head_num = index_shead - (kbit-2)
+                padding_head = '{' + str(padding_head_num)+ '{' + '{}[{}]'.format(signal_process, kbit-1) + '}'+'}, '
+                index_stail = kbit-2
+
+            index_stail = (kbit-wbit) - (spoi-opoi)
+            padding_tail = ''
+            if index_stail < 0:
+                padding_tail_num = abs(index_stail)
+                padding_tail = ', {}\'b0'.format(padding_tail_num)
+                index_stail = 0
+            
+            assign_str = '{' + '{}[{}], '.format(signal_process, kbit-1)
+            assign_str = assign_str + padding_head
+            assign_str = assign_str + '{}[{}:{}]'.format(signal_process, index_shead, index_stail)
+            assign_str = assign_str + padding_tail
+            assign_str = assign_str + '}'
+
+        pwl_hdl = pwl_hdl + '{} :\n'.format(assign_str)
+
+    default = str(wbit)+'{' + '1\'b0' + '}'
+    pwl_hdl = pwl_hdl + '                  {' + default + '};\n'
+
+    return pwl_hdl
 
 
 # for more robust usage, the left and right markers should be different 
