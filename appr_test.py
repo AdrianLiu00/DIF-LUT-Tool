@@ -1,14 +1,19 @@
 # Visual and Analytical Test of Approximation
 
-from utils import dec_to_bin, bin_to_dec, look_up
 import matplotlib.pylab as plt
+import numpy as np
 
 from NlDefine import NLOperation
+from utils import dec_to_bin, bin_to_dec, look_up
 
 
-def vis_dif(self:NLOperation, lut_pair:tuple[tuple[dict, float], tuple[dict, float]]) -> None:
+
+def vis_dif(self:NLOperation) -> None:
     '''lut_pair : (lut_pos, lut_neg)'''
     
+    lut_pos, acc_pos = self.range_lut_make()
+    lut_neg, acc_neg = self.range_lut_make(neg=True)
+
     bias = 2 ** (self.IPOI)
 
     in_table = []
@@ -31,9 +36,9 @@ def vis_dif(self:NLOperation, lut_pair:tuple[tuple[dict, float], tuple[dict, flo
         tru = self.tfunc.ori(in_table_dec[i])
         
         if in_table[i][0] == '0':
-            cut_appr = bin_to_dec(look_up(in_table[i], lut_pair[0], self.KEY_BIT), poi=self.OPOI)
+            cut_appr = bin_to_dec(look_up(in_table[i], lut_pos, self.KEY_BIT), poi=self.OPOI)
         else:
-            cut_appr = bin_to_dec(look_up(in_table[i], lut_pair[1], self.KEY_BIT), poi=self.OPOI)
+            cut_appr = bin_to_dec(look_up(in_table[i], lut_neg, self.KEY_BIT), poi=self.OPOI)
         
         pwl_appr = self.tfunc.pwl(bin_to_dec(in_table[i], poi= self.IPOI))
         appr = pwl_appr + cut_appr
@@ -77,4 +82,59 @@ def vis_dif(self:NLOperation, lut_pair:tuple[tuple[dict, float], tuple[dict, flo
     plt.show()
 
     return
+
+
+def vis_hw(self:NLOperation, path:str='output/simresult.txt') -> None:
+
+    frac_in = self.INPUT_BIT -1 -self.IPOI
+    frac_out = self.OUTPUT_BIT -1 -self.OPOI
+
+    vector_in = []
+    vector_out = []
+
+    with open(path, 'r') as file:
+        for line in file.readlines():
+            if(line == '\n'):
+                continue
+            if(line[0:2] == 'in'):
+                instr = line[3:].strip('\n')
+                vector_in.append(bin_to_dec(instr, poi=self.IPOI))
+            if(line[0:3] == 'out'):
+                outstr = line[4:].strip('\n')
+                vector_out.append(bin_to_dec(outstr, poi=self.OPOI))
+
+    func = self.tfunc.ori
+
+    # print(len(vector_in), len(vector_out))
+
+    vector_tru = [func(x) for x in vector_in]
+    err = [vector_out[i] - vector_tru[i] for i in range(len(vector_in))]
+    err_abs = [abs(i) for i in err]
+
+    # print(max(err), err.index(max(err)))
+    # print(min(err), err.index(min(err)))
+    print('Mean Absolute Error of Approximation: {:.3f}'.format(np.mean(err_abs[:])))
+
+
+    # Sort
+    vectors = [(vector_in[i], vector_out[i], vector_tru[i], err[i]) for i in range(len(vector_in))]
+    vectors = sorted(vectors, key=lambda x : x[0])
+    
+    vector_in = [item[0] for item in vectors]
+    vector_out = [item[1] for item in vectors]
+    vector_tru = [item[2] for item in vectors]
+    err = [item[3] for item in vectors]
+
+
+    plt.subplot(2, 1, 1)
+    plt.plot(vector_in, vector_tru, color= 'green', linewidth=5)
+    plt.plot(vector_in, vector_out, color = 'blue', linewidth=2.8)
+
+    plt.subplot(2, 1, 2)
+    plt.title('ERROR Range:    [{:.5f} , {:.5f}]'.format(max(err), min(err)))
+
+    plt.plot(vector_in, err, color='red')
+    plt.axhline(y=max(err), linewidth=1.5, color='#668B8B', linestyle='--')
+    plt.axhline(y=min(err), linewidth=1.5, color='#668B8B', linestyle='--')
+    plt.show()
 

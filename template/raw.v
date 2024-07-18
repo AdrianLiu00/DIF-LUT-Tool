@@ -21,19 +21,19 @@ localparam WORD_BIT = $$WORD_BIT$$;
 wire [INPUT_BIT-1:0] data_in;
 reg  [OUTPUT_BIT-1:0] data_out;
 
-wire [WORD_BIT-1:0] pwl_val;
+wire signed  [WORD_BIT-1:0] pwl_val;
 
-wire [WORD_BIT-1:0] lut_val;
-wire [WORD_BIT-1:0] lut_val_pos;
-wire [WORD_BIT-1:0] lut_val_neg;
+wire signed  [WORD_BIT-1:0] lut_val;
+wire signed  [WORD_BIT-1:0] lut_val_pos;
+wire signed  [WORD_BIT-1:0] lut_val_neg;
 
-wire [WORD_BIT-1:0] out_pos;
+wire signed  [WORD_BIT-1:0] out_pos;
 
 
 //-------------------------------------------------------
 // Input
 
-reg [KEY_BIT-1:0] in_reg;
+reg signed  [KEY_BIT-1:0] in_reg;
 always @(posedge clk or negedge rsn) begin
     if (!rsn)
         in_reg <= {KEY_BIT{1'b0}};

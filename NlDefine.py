@@ -1,5 +1,5 @@
 from FuncZoo import NLFuncZoo
-from parser_in import read_ini
+from parser_in import read_ini, key_bit_select
 
 
 class NLOperation(object):
@@ -25,6 +25,8 @@ class NLOperation(object):
     Eta = 0.9
     BAND = 2 * PRE * Eta
 
+    # Visualization
+    VIS = False
     QMARGIN = 20
 
     # ---------------------------------------------------------------
@@ -49,24 +51,30 @@ class NLOperation(object):
         self.PRE = float(params['Target_Accuracy'])
         self.BAND = 2 * self.Eta * self.PRE
 
+        self.VIS = int(params['visualize']) == 1
+
         # Pending for modification
-        self.KEY_BIT = self.INPUT_BIT
-        self.WORD_BIT = self.OUTPUT_BIT
+        if 'Customize_Key_Bit' in params.keys():
+            self.KEY_BIT = int(params['Customize_Key_Bit'])
+        else:
+            self.KEY_BIT = key_bit_select('template/defaultK.ini',self.label, self.PRE, self.INPUT_BIT)
+
+        if 'Customize_Word_Bit' in params.keys():
+            self.WORD_BIT = int(params['Customize_Word_Bit'])
+        else:
+            self.WORD_BIT = self.OUTPUT_BIT
 
 
 
     def range_lut_make(self, neg:bool) -> tuple[dict, float]: ...
 
-    def range_lut_emit(self, neg:bool, path:str) -> None: ...
-
-    def pwl_hdl_generate(self) -> str: ...
-
-    def top_hdl_emit(self, template:str, path:str) -> None: ...
-
     def verilog_emit(self, template:str, path:str) -> None: ...
 
-    def vis_dif(self, lut_pair:tuple[tuple[dict, float], tuple[dict, float]]) -> None: ...
+    def testbench_emit(self, template:str, path:str) -> None: ...
 
+    def vis_dif(self) -> None: ...
+
+    def vis_hw(self, path:str='output/simresult.txt') -> None: ...
 
 
 

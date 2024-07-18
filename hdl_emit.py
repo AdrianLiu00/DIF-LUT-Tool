@@ -33,14 +33,14 @@ def pwl_hdl_generate_reg(self:NLOperation) -> str:
         comp_r = ''
         if left_bound:
             bstr = dec_to_bin(linear.boundry_l, bits=kbit, poi=ipoi)
-            comp_l = 'in_reg >= {}\'b{}'.format(kbit, bstr)
+            comp_l = 'in_reg >= $signed({}\'b{})'.format(kbit, bstr)
         
         if left_bound and right_bound:
             and_flag = ' && '
         
         if right_bound:
             bstr = dec_to_bin(linear.boundry_r, bits=kbit, poi=ipoi)
-            comp_r = 'in_reg < {}\'b{}'.format(kbit, bstr)
+            comp_r = 'in_reg < $signed({}\'b{})'.format(kbit, bstr)
 
         pwl_hdl = pwl_hdl + 'if ({}{}{})\n'.format(comp_l, and_flag, comp_r)
 
@@ -125,14 +125,14 @@ def pwl_hdl_generate(self:NLOperation) -> str:
         comp_r = ''
         if left_bound:
             bstr = dec_to_bin(linear.boundry_l, bits=kbit, poi=ipoi)
-            comp_l = 'in_reg >= {}\'b{}'.format(kbit, bstr)
+            comp_l = 'in_reg >= $signed({}\'b{})'.format(kbit, bstr)
         
         if left_bound and right_bound:
             and_flag = ' && '
         
         if right_bound:
             bstr = dec_to_bin(linear.boundry_r, bits=kbit, poi=ipoi)
-            comp_r = 'in_reg < {}\'b{}'.format(kbit, bstr)
+            comp_r = 'in_reg < $signed({}\'b{})'.format(kbit, bstr)
         
         pwl_hdl = pwl_hdl + ' ({}{}{}) ? '.format(comp_l, and_flag, comp_r)
 
@@ -251,4 +251,24 @@ def verilog_emit(self:NLOperation, template:str='template/raw.v', path:str='outp
     print(f" Verilog HDL Generation Done ".center(60, '*'))
 
     return
+
+
+
+def testbench_emit(self:NLOperation, template:str='template/rawtb.v', path:str='output/') -> None:
+    paras = {
+        'FUNC': self.label,
+        'INPUT_BIT': self.INPUT_BIT,
+        'OUTPUT_BIT': self.OUTPUT_BIT,
+        'INPUT_NUM': 2**self.INPUT_BIT,
+
+        'OUTPUT_FILE': r'"D:\\\\GitLife\\\\DIF-LUT-TOOL\\\\output\\\\simresult.txt"'
+        # 'OUTPUT_FILE': r'"simresult.txt"'
+    }
+
+    outfile = path + 'top_tb.v'
+    replace_para(input_file=template, output_file=outfile,
+                        parameters=paras,
+                        marker_l='$$', marker_r='$$')
     
+    print(f"Parameters in {template} have been modified and saved to {outfile}")
+    return
