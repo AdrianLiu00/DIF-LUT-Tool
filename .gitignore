@@ -1,0 +1,4 @@
+# python cache
+__pycache__/
+output/
+hwpic/
