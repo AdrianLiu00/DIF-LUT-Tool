@@ -56,6 +56,7 @@ def dec_to_bin(num, bits=12, poi=0) -> str:
     # Rounding
     if num_com >= msb:
         bin_code = bin(int(bin_code, 2) + 1)[2:].zfill(bits) # clear head of '0b'
+        bin_code = bin_code[-bits:]
 
     return bin_code
 
@@ -160,10 +161,10 @@ def random_test(bits=12, times=5) -> None:
 if __name__ == '__main__':
 
 
-    pai = 3.1415926
-    bstr = dec_to_bin(pai/6, bits=12, poi=1)
-    apai = bin_to_dec(bstr, poi=1)
-    print(pai/6, bstr, apai)
+    # pai = 3.1415926
+    # bstr = dec_to_bin(pai/6, bits=12, poi=1)
+    # apai = bin_to_dec(bstr, poi=1)
+    # print(pai/6, bstr, apai)
 
     # dec_to_bin(1.2, 10, 0)
 
@@ -177,3 +178,4 @@ if __name__ == '__main__':
 
     # print(bin_to_dec('1001', 3))
 
+    print(quantize(-0.001680519, 9, 4))

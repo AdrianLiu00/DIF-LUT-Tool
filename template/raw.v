@@ -33,17 +33,19 @@ wire signed  [WORD_BIT-1:0] out_pos;
 //-------------------------------------------------------
 // Input
 
-reg signed  [KEY_BIT-1:0] in_reg;
+reg signed  [INPUT_BIT-1:0] in_reg;
 always @(posedge clk or negedge rsn) begin
     if (!rsn)
-        in_reg <= {KEY_BIT{1'b0}};
+        in_reg <= {INPUT_BIT{1'b0}};
     else
-        in_reg <= data_in[INPUT_BIT-1 -: KEY_BIT];
+        in_reg <= data_in;
 end
 
 
 //-------------------------------------------------------
 // Piecewise linear matching
+
+$$PWL_TEMP$$
 
 assign pwl_val = $$PWL_HDL$$
 
@@ -52,17 +54,17 @@ assign pwl_val = $$PWL_HDL$$
 
 // (* DONT_TOUCH = "yes" *)
 dif_lut_K$$KEY_BIT$$W$$WORD_BIT$$ lut0(
-    .key(in_reg[KEY_BIT-1:0]),
+    .key(in_reg[INPUT_BIT-1 -: KEY_BIT]),
     .value(lut_val_pos)
 );
 
 // (* DONT_TOUCH = "yes" *) 
 dif_lut_K$$KEY_BIT$$W$$WORD_BIT$$_sym lut1(
-    .key(in_reg[KEY_BIT-1:0]),
+    .key(in_reg[INPUT_BIT-1 -: KEY_BIT]),
     .value(lut_val_neg)
 );
 
-assign lut_val = {in_reg[KEY_BIT-1]? lut_val_neg:lut_val_pos};
+assign lut_val = {in_reg[INPUT_BIT-1]? lut_val_neg:lut_val_pos};
 
 
 //-------------------------------------------------------

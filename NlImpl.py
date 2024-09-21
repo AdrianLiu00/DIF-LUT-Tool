@@ -14,7 +14,8 @@ NLOperation.testbench_emit = testbench_emit
 
 
 if __name__ == '__main__':
-    nlf = NLOperation(config = 'template/example.ini')
+    # nlf = NLOperation(config = 'template/example.ini')
+    nlf = NLOperation(config = 'output/example.ini')
     # lut, acc = nlf.range_lut_make()
     # print(lut)
     # print(len(lut), acc)
@@ -23,7 +24,7 @@ if __name__ == '__main__':
     # print(lut_neg)
     # print(len(lut_neg), acc_neg)
 
-    # nlf.vis_dif()
+    nlf.vis_dif()
 
     # nlf.range_lut_emit()
     # nlf.range_lut_emit(neg=True)
@@ -34,4 +35,4 @@ if __name__ == '__main__':
     # nlf.verilog_emit()
     # nlf.testbench_emit()
 
-    nlf.vis_hw()
+    # nlf.vis_hw()

@@ -6,7 +6,7 @@ from NlDefine import NLOperation
 from utils import dec_to_bin
 from lut_emit import range_lut_emit
 
-
+# Old version. Not Used anymore
 def pwl_hdl_generate_reg(self:NLOperation) -> str:
     kbit = self.KEY_BIT
     ipoi = self.IPOI
@@ -99,15 +99,18 @@ def pwl_hdl_generate_reg(self:NLOperation) -> str:
     return pwl_hdl        
 
 
-def pwl_hdl_generate(self:NLOperation) -> str:
-    kbit = self.KEY_BIT
+def pwl_hdl_generate(self:NLOperation) -> list[str,str]:
+    ibit = self.INPUT_BIT
+    
     ipoi = self.IPOI
+
     wbit = self.WORD_BIT
     opoi = self.OPOI
 
     seg_num = self.tfunc.tpwl.seg_number
     linear_list = self.tfunc.tpwl.linears
 
+    pwl_temp = ''
     pwl_hdl = ''
 
     # Create if-else sequence
@@ -124,15 +127,15 @@ def pwl_hdl_generate(self:NLOperation) -> str:
         and_flag = ''
         comp_r = ''
         if left_bound:
-            bstr = dec_to_bin(linear.boundry_l, bits=kbit, poi=ipoi)
-            comp_l = 'in_reg >= $signed({}\'b{})'.format(kbit, bstr)
+            bstr = dec_to_bin(linear.boundry_l, bits=ibit, poi=ipoi)
+            comp_l = 'in_reg >= $signed({}\'b{})'.format(ibit, bstr)
         
         if left_bound and right_bound:
             and_flag = ' && '
         
         if right_bound:
-            bstr = dec_to_bin(linear.boundry_r, bits=kbit, poi=ipoi)
-            comp_r = 'in_reg < $signed({}\'b{})'.format(kbit, bstr)
+            bstr = dec_to_bin(linear.boundry_r, bits=ibit, poi=ipoi)
+            comp_r = 'in_reg < $signed({}\'b{})'.format(ibit, bstr)
         
         pwl_hdl = pwl_hdl + ' ({}{}{}) ? '.format(comp_l, and_flag, comp_r)
 
@@ -153,30 +156,32 @@ def pwl_hdl_generate(self:NLOperation) -> str:
             if greater_zero:
                 signal_process = 'in_reg'
             else:
-                signal_process = '(~in_reg + 1\'b1)'
+                pwl_temp = 'wire [INPUT_BIT-1:0] temp;\n'
+                pwl_temp = pwl_temp + 'assign temp = (~in_reg + 1\'b1);'
+                signal_process = 'temp'
 
             shift_num = int(np.log2(abs(linear.slope)))
             spoi = ipoi + shift_num
 
             # Pending for modification
-            index_shead = (kbit-2) - (spoi-opoi)
+            index_shead = (ibit-2) - (spoi-opoi)
             if index_shead < 0 :
                 raise ValueError('Out-of-Range Piecewise Matching!')
             
             padding_head = ''
-            if index_shead > kbit-2:
-                padding_head_num = index_shead - (kbit-2)
-                padding_head = '{' + str(padding_head_num)+ '{' + '{}[{}]'.format(signal_process, kbit-1) + '}'+'}, '
-                index_stail = kbit-2
+            if index_shead > ibit-2:
+                padding_head_num = index_shead - (ibit-2)
+                padding_head = '{' + str(padding_head_num)+ '{' + '{}[{}]'.format(signal_process, ibit-1) + '}'+'}, '
+                index_stail = ibit-2
 
-            index_stail = (kbit-wbit) - (spoi-opoi)
+            index_stail = (ibit-wbit) - (spoi-opoi)
             padding_tail = ''
             if index_stail < 0:
                 padding_tail_num = abs(index_stail)
                 padding_tail = ', {}\'b0'.format(padding_tail_num)
                 index_stail = 0
             
-            assign_str = '{' + '{}[{}], '.format(signal_process, kbit-1)
+            assign_str = '{' + '{}[{}], '.format(signal_process, ibit-1)
             assign_str = assign_str + padding_head
             assign_str = assign_str + '{}[{}:{}]'.format(signal_process, index_shead, index_stail)
             assign_str = assign_str + padding_tail
@@ -187,7 +192,7 @@ def pwl_hdl_generate(self:NLOperation) -> str:
     default = str(wbit)+'{' + '1\'b0' + '}'
     pwl_hdl = pwl_hdl + '                  {' + default + '};\n'
 
-    return pwl_hdl
+    return pwl_hdl, pwl_temp
 
 
 # for more robust usage, the left and right markers should be different 
@@ -219,12 +224,14 @@ def top_hdl_emit(self:NLOperation,
         'KEY_BIT': self.KEY_BIT,
         'WORD_BIT': self.WORD_BIT,
 
-        'PWL_HDL': None
+        'PWL_HDL': None,
+        'PWL_TEMP':None
     }
 
 
-    PWL = pwl_hdl_generate(self)
+    PWL, PWL_TEMP = pwl_hdl_generate(self)
     paras['PWL_HDL'] = PWL
+    paras['PWL_TEMP'] = PWL_TEMP
     
     outfile = path + 'top.v'
 

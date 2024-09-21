@@ -107,23 +107,33 @@ def vis_hw(self:NLOperation, path:str='output/simresult.txt') -> None:
 
     # print(len(vector_in), len(vector_out))
 
+    
+
     vector_tru = [func(x) for x in vector_in]
     err = [vector_out[i] - vector_tru[i] for i in range(len(vector_in))]
-    err_abs = [abs(i) for i in err]
 
-    # print(max(err), err.index(max(err)))
-    # print(min(err), err.index(min(err)))
-    print('Mean Absolute Error of Approximation: {:.3f}'.format(np.mean(err_abs[:])))
-
-
+    
     # Sort
     vectors = [(vector_in[i], vector_out[i], vector_tru[i], err[i]) for i in range(len(vector_in))]
     vectors = sorted(vectors, key=lambda x : x[0])
     
+    vectors = vectors[self.QMARGIN:-self.QMARGIN]
+
     vector_in = [item[0] for item in vectors]
     vector_out = [item[1] for item in vectors]
     vector_tru = [item[2] for item in vectors]
     err = [item[3] for item in vectors]
+    err_abs = [abs(i) for i in err]
+
+    for _, e in enumerate(err_abs):
+        if e > 0.2:
+            print(dec_to_bin(vector_in[_], self.INPUT_BIT, self.IPOI))
+
+
+    # print(max(err), err.index(max(err)))
+    # print(min(err), err.index(min(err)))
+    print('Mean Absolute Error of Approximation: {:.8f}'.format(np.mean(err_abs)))
+    print('ERROR Range:    [{:.9f} , {:.9f}]'.format(max(err), min(err)))
 
 
     plt.subplot(2, 1, 1)
