@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import erf
 
 from typing import Dict
 from FuncRe import Linear, PiecewiseL, Func
@@ -118,6 +119,25 @@ tpwl_silu = PiecewiseL(2,[
     Linear(0, INF, 1, 0)
 ])
 
+# --------------------------------------------------
+def gelu(x):
+    return 0.5 * x * (1 + erf(x / np.sqrt(2)))
+
+def deri_gelu(x):
+    phi_x = 0.5 * (1 + erf(x / np.sqrt(2)))
+    pdf_x = np.exp(-0.5 * x**2) / np.sqrt(2 * np.pi)
+    return phi_x + x * pdf_x
+
+def pwl_gelu(x):
+    if x >= 0:
+        return x
+    else:
+        return 0
+
+tpwl_gelu = PiecewiseL(2,[
+    Linear(-INF, 0, 0, 0),
+    Linear(0, INF, 1, 0)
+])
 
 # =================================================================================
 # Function Zoo Arrangement
@@ -128,7 +148,8 @@ NLFuncZoo : Dict[str, Func] = {
     'tanh' : Func(tanh, tpwl_tanh),
     'sigmoid' : Func(sigmoid, tpwl_sigmoid),
     'elu' : Func(elu, tpwl_elu),
-    'silu' : Func(silu, tpwl_silu)
+    'silu' : Func(silu, tpwl_silu),
+    'gelu' : Func(gelu, tpwl_gelu)
 }
 
 

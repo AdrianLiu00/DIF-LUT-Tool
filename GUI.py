@@ -7,7 +7,7 @@ from typing import Callable
 
 config_path = "template/config.ini"
 parameter_list = ["Input_bitwidth", "Input_fraction_bitwidth", "Output_bitwidth", "Output_fraction_bitwidth", "Target_Accuracy"]
-func_dict = {"Cosine": 'cos', "ELU": 'elu', "SiLU": 'silu', "Sigmoid": 'sigmoid', "Sine": 'sin', "Tanh": 'tanh'}
+func_dict = {"Cosine": 'cos', "ELU": 'elu', "GELU": 'gelu', "SiLU": 'silu', "Sigmoid": 'sigmoid', "Sine": 'sin', "Tanh": 'tanh'}
 
 def gui(runtime: Callable):
 
@@ -104,7 +104,7 @@ def gui(runtime: Callable):
 
     combo_var = tk.StringVar()
     combobox = ttk.Combobox(root, textvariable=combo_var, width=15)
-    combobox['values'] = ("Cosine", "ELU", "SiLU", "Sigmoid", "Sine", "Tanh")
+    combobox['values'] = ("Cosine", "ELU", "GELU", "SiLU", "Sigmoid", "Sine", "Tanh")
     combobox.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
     # scroll bar
