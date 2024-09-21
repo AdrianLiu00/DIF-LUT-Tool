@@ -1,9 +1,33 @@
 from utils import dec_to_bin, bin_to_dec, quantize, inv
 
 from NlDefine import NLOperation
+from FuncRe import PiecewiseL
+from FuncZoo import tpwl_sigmoid
+
+from typing import Callable
+import numpy as np
+
+def err_qunt_pwl(pwl:PiecewiseL, keybit:int, poi:int) -> Callable:
+    '''return the err func: (pwl_hw - pwl_tru)'''
+
+    linear_list = pwl.linears
+    linear_list = sorted(linear_list, key=lambda x: x.boundry_l)
+
+    def epwl(x:float) -> float:
+
+        for linear in linear_list:
+            if x >= linear.boundry_l and x < linear.boundry_r:
+                err1 = linear.slope * (-(2**(poi-keybit))) # no rounding error
+                err2 = quantize(linear.bias, keybit, poi)[0] - linear.bias
+                return err1 + err2
+
+        raise ValueError('Illegal Piecewise or Out-of-bounds Input!')
+
+    return epwl
 
 
 def range_lut_make(self:NLOperation, neg:bool=False) -> tuple[dict, float]:
+        
     key_table = []
 
     if not neg:
@@ -15,15 +39,20 @@ def range_lut_make(self:NLOperation, neg:bool=False) -> tuple[dict, float]:
             dec_num = -i / (2**(self.KEY_BIT - self.IPOI - 1))
             key_table.append(dec_to_bin(dec_num, bits=self.KEY_BIT, poi=self.IPOI))
 
+    # epwl = err_qunt_pwl(self.tfunc.tpwl, self.KEY_BIT, self.IPOI)
+    # epwl = err_qunt_pwl(self.tfunc.tpwl, self.INPUT_BIT, self.IPOI)
+    # dif_hw = lambda x : self.tfunc.dif(x) - epwl(x)
+    dif_hw = lambda x : self.tfunc.dif(x) # Old version
+    
     dense_table = []
     for i in range(len(key_table)):
-        dense_table.append(self.tfunc.dif(bin_to_dec(key_table[i], poi=self.IPOI)))
+        dense_table.append(dif_hw(bin_to_dec(key_table[i], poi=self.IPOI)))
 
     dif_table_ori = [abs(dense_table[i+1] - dense_table[i]) for i in range(len(dense_table) - 1)]
     # print(dif_table_ori)
     # print('Max Dense Dif:  ', max(dif_table_ori))
     
-    # print('LIMIT PRESION:  {:.5f}'.format(max(dif_table_ori)/2))
+    print('LIMIT PRESION:  {:.5f}'.format(max(dif_table_ori)/2))
     # print('TARGET PRESION:  {:.4f}'.format(PRE))
 
 
@@ -57,11 +86,11 @@ def range_lut_make(self:NLOperation, neg:bool=False) -> tuple[dict, float]:
 
     word_table = []
     for i in range(len(bound_table) - 1):
-        result = 0.5 * (self.tfunc.dif(bin_to_dec(bound_table[i], poi=self.IPOI)) + self.tfunc.dif(bin_to_dec(bound_table[i+1], poi=self.IPOI)))
+        result = 0.5 * (dif_hw(bin_to_dec(bound_table[i], poi=self.IPOI)) + dif_hw(bin_to_dec(bound_table[i+1], poi=self.IPOI)))
         _, word = quantize(result, bits=self.WORD_BIT, poi=self.OPOI)
         word_table.append(word)
-        # print(result)
-    # print(word_table)
+        print(result)
+    print(word_table)
 
     lut = {}
     for i in range(len(word_table)):
@@ -93,3 +122,7 @@ def sym_lut_make(self:NLOperation, lut:dict) -> dict:
     return lut_sym
 
 
+
+if __name__ == '__main__':
+    epwl = err_qunt_pwl(tpwl_sigmoid, 10, 3)
+    print(epwl(-4))
