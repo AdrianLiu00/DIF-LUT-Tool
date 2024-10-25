@@ -13,8 +13,6 @@ DIF-LUT has super lightweighting requirements, which can be simply installed by
 pip install -r requirements.txt
 ```
 
-------
-
 ### Usage
 
 for Linux/MacOS:
