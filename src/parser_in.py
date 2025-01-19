@@ -38,6 +38,9 @@ def key_bit_select(ini_default:str, func:str, pre:float, inbit:int) -> int:
             parameters[section].append((float(option), int(config.get(section, option))))
         parameters[section] = sorted(parameters[section], key=lambda x : x[0])
 
+    if func not in parameters.keys():
+        return inbit
+
     for section in parameters.keys():
         if section == func:
             for ind, it in enumerate(parameters[section]):

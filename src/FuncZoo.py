@@ -139,6 +139,26 @@ tpwl_gelu = PiecewiseL(2,[
     Linear(0, INF, 1, 0)
 ])
 
+# --------------------------------------------------
+def exp_minus_x(x):
+    if x>=0:
+        return np.exp(-x)
+    else:
+        return 1
+
+def pwl_exp_minus_x(x):
+    if x >= 0.69:
+        return -0.69
+    if x <=0:
+        return 1
+    return -x
+
+tpwl_exp_minus_x = PiecewiseL(3,[
+    Linear(-INF, 0, 0, 0),
+    Linear(0, 0.69, -1, 0),
+    Linear(0.69, INF, 0, -0.69)
+])
+
 # =================================================================================
 # Function Zoo Arrangement
 
@@ -149,7 +169,8 @@ NLFuncZoo : Dict[str, Func] = {
     'sigmoid' : Func(sigmoid, tpwl_sigmoid),
     'elu' : Func(elu, tpwl_elu),
     'silu' : Func(silu, tpwl_silu),
-    'gelu' : Func(gelu, tpwl_gelu)
+    'gelu' : Func(gelu, tpwl_gelu),
+    'exp_-x' : Func(exp_minus_x, tpwl_exp_minus_x)
 }
 
 
